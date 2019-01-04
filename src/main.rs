@@ -40,11 +40,19 @@ fn to_displacement_sin(time: si::Second<f64>, freq: si::Hertz<f64>) -> f64 {
     (time * freq * 2.0 * f64::consts::PI).sin()
 }
 
+fn to_displacement_saw(time: si::Second<f64>, freq: si::Hertz<f64>) -> f64 {
+    (to_displacement_sin(time, freq) +
+        to_displacement_sin(time, freq.map_unsafe(|x| x * 2.0)) / 2.0 +
+        to_displacement_sin(time, freq.map_unsafe(|x| x * 3.0)) / 3.0 +
+        to_displacement_sin(time, freq.map_unsafe(|x| x * 4.0)) / 4.0 +
+        to_displacement_sin(time, freq.map_unsafe(|x| x * 5.0)) / 5.0) / 2.284
+}
+
 fn to_displacement_sin_shepard_adjusted(time: si::Second<f64>, freq: si::Hertz<f64>) -> f64 {
     if freq > TUNING_NOTE().map_unsafe(|x| x * 4.0) || freq < TUNING_NOTE().map_unsafe(|x| x / 4.0) {
         0.0
     } else {
-        to_displacement_sin(time, freq) * (2.0 - ((freq / TUNING_NOTE()).value().clone().log2()).abs()) * 0.1
+        to_displacement_saw(time, freq) * (2.0 - ((freq / TUNING_NOTE()).value().clone().log2()).abs()) * 0.1
     }
 }
 
