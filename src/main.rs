@@ -7,7 +7,7 @@ use std::io::stdout;
 use std::io::prelude::*;
 use std::path::Path;
 use std::vec::Vec;
-use dim::{si, Dimensionless};
+use dim::{si, Dimensionless, MapUnsafe};
 
 fn SAMPLE_RATE()             -> si::Hertz<f64>  { 44100.0 * si::HZ }
 fn TUNING_NOTE()             -> si::Hertz<f64>  { 440.0 * si::HZ }
@@ -38,6 +38,23 @@ impl Note {
 
 fn to_displacement_sin(time: si::Second<f64>, freq: si::Hertz<f64>) -> f64 {
     (time * freq * 2.0 * f64::consts::PI).sin()
+}
+
+fn to_displacement_sin_shepard_adjusted(time: si::Second<f64>, freq: si::Hertz<f64>) -> f64 {
+    if freq > TUNING_NOTE().map_unsafe(|x| x * 4.0) || freq < TUNING_NOTE().map_unsafe(|x| x / 4.0) {
+        0.0
+    } else {
+        to_displacement_sin(time, freq) * (2.0 - ((freq / TUNING_NOTE()).value().clone().log2()).abs()) * 0.1
+    }
+}
+
+fn to_displacement_sin_shepard(time: si::Second<f64>, freq: si::Hertz<f64>) -> f64 {
+    let freq = (2.0 as f64).powf(((freq / TUNING_NOTE()).value().clone().log2() + 1.0) % 2.0 - 1.0) * TUNING_NOTE();
+    to_displacement_sin_shepard_adjusted(time, freq) +
+        to_displacement_sin_shepard_adjusted(time, freq.map_unsafe(|x| x / 2.0)) +
+        to_displacement_sin_shepard_adjusted(time, freq.map_unsafe(|x| x * 2.0)) +
+        to_displacement_sin_shepard_adjusted(time, freq.map_unsafe(|x| x / 4.0)) +
+        to_displacement_sin_shepard_adjusted(time, freq.map_unsafe(|x| x * 4.0))
 }
 
 fn to_sample(displacement: f64) -> u8 {
@@ -85,7 +102,7 @@ fn main() {
             eprintln!("{:?}, {}, {}", note, note.freq(), note.time());
             for i in 0..num_samples {
                 time += TIME_PER_SAMPLE();
-                let buf = [to_sample(to_displacement_sin(time, note.freq())); 1];
+                let buf = [to_sample(to_displacement_sin_shepard(time, note.freq())); 1];
                 stdout().write(&buf);
             }
         }
