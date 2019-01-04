@@ -105,7 +105,7 @@ fn main() {
 
     for loop_num in 0..=12 {
         for note in notes.iter() {
-            let note = note.clone().transpose((loop_num * 3) as Pitch);
+            let note = note.clone().transpose((loop_num * 3 - 2) as Pitch);
             let num_samples = (note.time() * SAMPLE_RATE()).value().clone() as u64;
             eprintln!("{:?}, {}, {}", note, note.freq(), note.time());
             for i in 0..num_samples {
