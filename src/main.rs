@@ -12,7 +12,7 @@ use dim::{si, Dimensionless, MapUnsafe};
 fn SAMPLE_RATE()             -> si::Hertz<f64>  { 44100.0 * si::HZ }
 fn TUNING_NOTE()             -> si::Hertz<f64>  { 440.0 * si::HZ }
 fn NOTES_IN_SCALE()          -> u64             { 12 }
-fn BEAT_LENGTH()             -> si::Second<f64> { 0.5 * si::S }
+fn BEAT_LENGTH()             -> si::Second<f64> { 0.25 * si::S }
 
 fn TIME_PER_SAMPLE()         -> si::Second<f64> { 1.0 / SAMPLE_RATE() }
 fn SMALLEST_INTERVAL_RATIO() -> f64             { (2.0 as f64).powf(1.0 / (NOTES_IN_SCALE() as f64)) }
@@ -33,6 +33,10 @@ impl Note {
 
     fn transpose(self, change: Pitch) -> Note {
         Note(self.0 + change, self.1)
+    }
+
+    fn scale_time(self, factor: Duration) -> Note {
+        Note(self.0, self.1 * factor)
     }
 
     fn envelope_at_time(self, time: si::Second<f64>) -> f64 {
@@ -89,7 +93,7 @@ fn main() {
     let mut time: si::Second<f64> = 0.0 * si::S;
 
     // White Lies - Time To Give
-    let notes: Vec<Note> = vec![
+    let melody: Vec<Note> = vec![
         Note(7, 1),
         Note(3, 1),
         Note(0, 1),
@@ -120,8 +124,8 @@ fn main() {
     ];
 
     for loop_num in 0..=12 {
-        for note in notes.iter() {
-            let note = note.clone().transpose((loop_num * 3 - 2) as Pitch);
+        for note in melody.iter() {
+            let note = note.clone().transpose((loop_num * 3 - 2) as Pitch).scale_time(2);
             let num_samples = (note.time() * SAMPLE_RATE()).value().clone() as u64;
             eprintln!("{:?}, {}, {}", note, note.freq(), note.time());
             for i in 0..num_samples {
