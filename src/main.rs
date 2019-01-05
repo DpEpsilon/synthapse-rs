@@ -123,7 +123,7 @@ fn main() {
         Note(8, 1),
     ];
 
-    for loop_num in 0..=12 {
+    for loop_num in 0..4 {
         for note in melody.iter() {
             let note = note.clone().transpose((loop_num * 3 - 2) as Pitch).scale_time(2);
             let num_samples = (note.time() * SAMPLE_RATE()).value().clone() as u64;
