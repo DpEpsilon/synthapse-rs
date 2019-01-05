@@ -35,8 +35,20 @@ impl Note {
         Note(self.0 + change, self.1)
     }
 
+    fn envelope_at_time(self, time: si::Second<f64>) -> f64 {
+        if time < 0.025 * si::S {
+            (time / (0.025 * si::S)).value().clone()
+        } else if time < 0.05 * si::S {
+            ((time - 0.025 * si::S) / (0.025 * si::S) * 0.2 + 0.8).value().clone()
+        } else if time < self.time() - 0.0125 * si::S {
+            0.8
+        } else {
+            ((self.time() - time) / (0.0125 * si::S) * 0.8).value().clone()
+        }
+    }
+
     fn displacement_at_time(self, time: si::Second<f64>) -> f64 {
-        to_displacement_sin_shepard(time, self.freq())
+        to_displacement_sin_shepard(time, self.freq()) * self.envelope_at_time(time)
     }
 }
 
