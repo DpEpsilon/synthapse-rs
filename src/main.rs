@@ -34,6 +34,10 @@ impl Note {
     fn transpose(self, change: Pitch) -> Note {
         Note(self.0 + change, self.1)
     }
+
+    fn displacement_at_time(self, time: si::Second<f64>) -> f64 {
+        to_displacement_sin_shepard(time, self.freq())
+    }
 }
 
 fn to_displacement_sin(time: si::Second<f64>, freq: si::Hertz<f64>) -> f64 {
@@ -109,10 +113,10 @@ fn main() {
             let num_samples = (note.time() * SAMPLE_RATE()).value().clone() as u64;
             eprintln!("{:?}, {}, {}", note, note.freq(), note.time());
             for i in 0..num_samples {
-                time += TIME_PER_SAMPLE();
-                let buf = [to_sample(to_displacement_sin_shepard(time, note.freq())); 1];
+                let buf = [to_sample(note.displacement_at_time((i as f64) * TIME_PER_SAMPLE())); 1];
                 stdout().write(&buf);
             }
+            time += note.time();
         }
     }
 }
