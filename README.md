@@ -1,2 +1,2 @@
-synthapse-rust
-==============
+synthapse-rs
+============
